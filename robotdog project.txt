@@ -1,0 +1,77 @@
+from xgoedu import XGOEDU #Importing XGOEDU for speech and gesture recognition
+from xgolib import XGO #Importing XGO for robot control
+import time  #Importing time library for time-related operations
+#Initialize XGO Lite and XGOEDU
+XGO_lite = XGO("xgolite")  #Initialize XGO Lite robot
+XGO_edu = XGOEDU()  #Initialize XGOEDU for speech and gesture recognition
+
+def detect_speech():
+    print("Listening for a command...") #Informing that the system is listening for command
+    #Start speech recognition
+    sound = XGO_edu.SpeechRecognition() #This method will likely return the recognized speech
+    if sound:
+        print(f"You said: {sound}") #Display the recognized speech
+        print(f"Type of sound: {type(sound)}") #Display the data type of the recognized sound
+        
+        #Compare recognized command with predefined list
+        if sound in ["等一下。", "逛街。", "走开。", "Hello。"]:
+            print(f"The command '{sound}' is recognized.") #Confirm the recognized command
+            if sound=="Hello。":
+                XGO_edu.SpeechSynthesis("How are you") #Respond to "Hello" command with a voice message
+                XGO_lite.action(13) #Perform a specific action with XGO Lite
+            if sound=="等一下。":#this chinese word can work as a 'stop' command
+                XGO_edu.SpeechSynthesis("I am waiting")
+                XGO_lite.action(12)
+            if sound=="逛街。":#this chinese word can work as a 'forward' command
+                XGO_lite.move_x(5) #Move the robot forward
+                time.sleep(3)
+                XGO_edu.SpeechSynthesis("let's go") #Respond with voice message "let's go"
+                XGO_lite.move_x(0) #Stop movement
+            if sound=="走开。":#this chinese word can work as a 'backward' command
+                XGO_lite.move_x(-5) #Move the robot backward
+                time.sleep(3)
+                XGO_edu.SpeechSynthesis("Goodbye") #Respond with "Goodbye" message
+                XGO_lite.move_x(0) #Stop movement
+        else:
+            print("Sound is not in command list.") #Inform if sound is not recognized in list
+    else:
+        print("No speech recognized.") #If no speech was recognized
+
+def capture():
+    print("Getting gesture...")
+    # Start gesture recognition
+    capture = XGO_edu.gestureRecognition()
+    if capture:
+        finger = capture[0]  #Get the one gesture in capture list
+        if finger=="1": # If gesture "1" is detected
+            print(f"Detected gesture: {capture}") #Display the detected gesture
+            time.sleep(3)
+            XGO_lite.leg(1,[0,0,70]) #set front left leg of the robot bend down
+            XGO_lite.leg(2,[0,0,70]) #set front right leg of the robot bend down
+            time.sleep(3)
+            XGO_lite.claw(0) #open claw on the arm of the robot
+            time.sleep(3)
+            XGO_lite.arm(100,-60) #Move the robot's arm to ground position
+            time.sleep(5)
+            XGO_lite.claw(255) #close the claw on the arm of the robot
+            time.sleep(3)
+            XGO_lite.arm(-100,50) #Move the robot's arm to top position
+            time.sleep(3)
+            XGO_lite.move_x(3) #Move the robot forward
+            time.sleep(5)
+            XGO_lite.move_x(0) #Stop robot movement
+            time.sleep(3)
+            XGO_lite.arm(100,-60) #Move the robot's arm to ground position
+            time.sleep(3)
+            XGO_lite.claw(0) #open the claw on the arm of the robot
+            time.sleep(3)
+            XGO_lite.action(2) #Perform stand up action
+            time.sleep(3)
+            XGO_edu.lcd_clear() #Clear the LCD screen on the robot
+            XGO_lite.reset() #Reset the robot to its initial state
+# Run the function to detect speech or gesture
+while True:
+    detect_speech() #Call the function to detect speech command
+    time.sleep(8)  # Wait a little before listening again
+    capture() #Call the function to detect gestures
+    time.sleep(6)
